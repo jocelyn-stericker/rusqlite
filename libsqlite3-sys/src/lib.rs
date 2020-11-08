@@ -70,3 +70,47 @@ impl Default for sqlite3_vtab_cursor {
         unsafe { mem::zeroed() }
     }
 }
+
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+pub mod wasm32_unknown_unknown_alloc {
+    use std::alloc::*;
+    use std::mem::{align_of, size_of};
+
+    unsafe fn layout_for(size: usize) -> Layout {
+        Layout::from_size_align_unchecked(size_of::<usize>() + size, align_of::<usize>())
+    }
+
+    #[no_mangle]
+    pub unsafe extern "C" fn rusqlite_wasm32_unknown_unknown_malloc(
+        size: std::os::raw::c_ulong,
+    ) -> *mut u8 {
+        let size = size as usize;
+        let size_and_data_ptr = alloc(layout_for(size));
+        *(size_and_data_ptr as *mut usize) = size;
+        size_and_data_ptr.add(size_of::<usize>())
+    }
+
+    #[no_mangle]
+    pub unsafe extern "C" fn rusqlite_wasm32_unknown_unknown_realloc(
+        data_ptr: *mut u8,
+        new_size: std::os::raw::c_ulong,
+    ) -> *mut u8 {
+        let size_and_data_ptr = data_ptr.sub(size_of::<usize>());
+        let size = *(size_and_data_ptr as *const usize);
+        let size_and_data_ptr = realloc(size_and_data_ptr, layout_for(size), new_size as usize);
+        *(size_and_data_ptr as *mut usize) = new_size as usize;
+        size_and_data_ptr.add(size_of::<usize>())
+    }
+
+    #[no_mangle]
+    pub unsafe extern "C" fn rusqlite_wasm32_unknown_unknown_free(data_ptr: *mut u8) {
+        let size_and_data_ptr = data_ptr.sub(size_of::<usize>());
+        let size = *(size_and_data_ptr as *const usize);
+        dealloc(size_and_data_ptr, layout_for(size))
+    }
+
+    #[no_mangle]
+    pub unsafe extern "C" fn log(x: std::os::raw::c_double) -> std::os::raw::c_double {
+        x.ln()
+    }
+}

@@ -59,6 +59,7 @@ mod build_bundled {
                 .expect("Could not copy bindings to output directory");
         }
         println!("cargo:rerun-if-changed=sqlite3/sqlite3.c");
+        println!("cargo:rerun-if-changed=sqlite3/wasm32-unknown-unknown/libc_stub.h");
         println!("cargo:rerun-if-changed=sqlite3/wasm32-wasi-vfs.c");
         let mut cfg = cc::Build::new();
         cfg.file("sqlite3/sqlite3.c")
@@ -77,7 +78,6 @@ mod build_bundled {
             .flag("-DSQLITE_ENABLE_STAT2")
             .flag("-DSQLITE_ENABLE_STAT4")
             .flag("-DSQLITE_SOUNDEX")
-            .flag("-DSQLITE_THREADSAFE=1")
             .flag("-DSQLITE_USE_URI")
             .flag("-DHAVE_USLEEP=1")
             .flag("-D_POSIX_THREAD_SAFE_FUNCTIONS") // cross compile with MinGW
@@ -85,6 +85,28 @@ mod build_bundled {
 
         if cfg!(feature = "with-asan") {
             cfg.flag("-fsanitize=address");
+        }
+
+        if env::var("TARGET") == Ok("wasm32-unknown-unknown".to_string()) {
+            cfg.flag("-isystem./sqlite3/wasm32-unknown-unknown-libc-stub")
+                // wasm32-unknown-unknown does not support pthreads
+                .flag("-DSQLITE_THREADSAFE=0")
+                // wasm32-unknown-unknown does not support time_t
+                .flag("-DSQLITE_OMIT_LOCALTIME")
+                // wasm32-unknown-unknown is not Linux, do not use
+                // the default VFS.
+                .flag("-DSQLITE_OS_OTHER")
+                // clang uses soft floats for 128 bit floats.
+                // That is slow and linking to compiler-rt is logistically complex.
+                // "long double" is the same as "double" on MSVC, so this isn't that weird.
+                .flag("-DLONGDOUBLE_TYPE=double")
+                .flag("-DSQLITE_DISABLE_LFS")
+                .flag("-DSQLITE_OMIT_LOAD_EXTENSION")
+                // More importantly, this enables memvfs.
+                .flag("-DENABLE_DESERIALIZE");
+            cfg.file("sqlite3/wasm32-unknown-unknown-vfs.c");
+        } else {
+            cfg.flag("-DSQLITE_THREADSAFE=1");
         }
 
         // Older versions of visual studio don't support c99 (including isnan), which
