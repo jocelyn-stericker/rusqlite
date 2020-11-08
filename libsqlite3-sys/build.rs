@@ -105,6 +105,7 @@ mod build_bundled {
                 // More importantly, this enables memvfs.
                 .flag("-DENABLE_DESERIALIZE");
             cfg.file("sqlite3/wasm32-unknown-unknown-vfs.c");
+            cfg.file("sqlite3/wasm32-unknown-unknown-libc-stub/libc_stub.c");
         } else {
             cfg.flag("-DSQLITE_THREADSAFE=1");
         }

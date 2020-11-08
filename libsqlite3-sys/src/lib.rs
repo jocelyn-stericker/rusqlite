@@ -110,7 +110,9 @@ pub mod wasm32_unknown_unknown_alloc {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn log(x: std::os::raw::c_double) -> std::os::raw::c_double {
+    pub unsafe extern "C" fn rusqlite_wasm32_unknown_unknown_log(
+        x: std::os::raw::c_double,
+    ) -> std::os::raw::c_double {
         x.ln()
     }
 }
