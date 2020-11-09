@@ -59,7 +59,6 @@ mod build_bundled {
                 .expect("Could not copy bindings to output directory");
         }
         println!("cargo:rerun-if-changed=sqlite3/sqlite3.c");
-        println!("cargo:rerun-if-changed=sqlite3/wasm32-unknown-unknown/libc_stub.h");
         println!("cargo:rerun-if-changed=sqlite3/wasm32-wasi-vfs.c");
         let mut cfg = cc::Build::new();
         cfg.file("sqlite3/sqlite3.c")
@@ -106,6 +105,9 @@ mod build_bundled {
                 .flag("-DENABLE_DESERIALIZE");
             cfg.file("sqlite3/wasm32-unknown-unknown-vfs.c");
             cfg.file("sqlite3/wasm32-unknown-unknown-libc-stub/libc_stub.c");
+
+            println!("cargo:rerun-if-changed=sqlite3/wasm32-unknown-unknown-libc-stub/libc_stub.c");
+            println!("cargo:rerun-if-changed=sqlite3/wasm32-unknown-unknown-vfs.c");
         } else {
             cfg.flag("-DSQLITE_THREADSAFE=1");
         }
