@@ -73,40 +73,64 @@ impl Default for sqlite3_vtab_cursor {
 
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub mod wasm32_unknown_unknown_alloc {
-    use std::alloc::*;
-    use std::mem::{align_of, size_of};
+    // https://github.com/fortanix/rust-sgx/blob/master/rs-libc/src/alloc.rs
 
-    unsafe fn layout_for(size: usize) -> Layout {
-        Layout::from_size_align_unchecked(size_of::<usize>() + size, align_of::<usize>())
-    }
+    use std::alloc::*;
+    use std::ffi::c_void;
+    use std::mem;
+    use std::ptr;
+
+    #[allow(non_camel_case_types)]
+    type size_t = usize;
+    const ALIGN: usize = 8;
 
     #[no_mangle]
-    pub unsafe extern "C" fn rusqlite_wasm32_unknown_unknown_malloc(
-        size: std::os::raw::c_ulong,
-    ) -> *mut u8 {
-        let size = size as usize;
-        let size_and_data_ptr = alloc(layout_for(size));
-        *(size_and_data_ptr as *mut usize) = size;
-        size_and_data_ptr.add(size_of::<usize>())
+    pub unsafe extern "C" fn rusqlite_wasm32_unknown_unknown_malloc(size: size_t) -> *mut c_void {
+        let ptr_size = mem::size_of::<*mut usize>();
+        let alloc_size = size + ptr_size;
+        let alloc_layout = Layout::from_size_align_unchecked(alloc_size, ALIGN);
+        let ptr = System.alloc(alloc_layout) as *mut usize;
+        if ptr == ptr::null_mut() {
+            return ptr::null_mut();
+        }
+        ptr::write(ptr, alloc_size);
+        ptr.offset(1) as *mut c_void
     }
 
     #[no_mangle]
     pub unsafe extern "C" fn rusqlite_wasm32_unknown_unknown_realloc(
-        data_ptr: *mut u8,
-        new_size: std::os::raw::c_ulong,
-    ) -> *mut u8 {
-        let size_and_data_ptr = data_ptr.sub(size_of::<usize>());
-        let size = *(size_and_data_ptr as *const usize);
-        let size_and_data_ptr = realloc(size_and_data_ptr, layout_for(size), new_size as usize);
-        *(size_and_data_ptr as *mut usize) = new_size as usize;
-        size_and_data_ptr.add(size_of::<usize>())
+        ptr: *mut c_void,
+        size: size_t,
+    ) -> *mut c_void {
+        if ptr == ptr::null_mut() {
+            return rusqlite_wasm32_unknown_unknown_malloc(size);
+        } else if size == 0 {
+            rusqlite_wasm32_unknown_unknown_free(ptr);
+            return ptr::null_mut();
+        }
+
+        let ptr = (ptr as *mut usize).offset(-1);
+        let ptr_size = mem::size_of::<*mut usize>();
+        let old_alloc_layout = Layout::from_size_align_unchecked(ptr::read(ptr), ALIGN);
+        let new_alloc_size = size + ptr_size;
+
+        let ptr = System.realloc(ptr as _, old_alloc_layout, new_alloc_size) as *mut usize;
+        if ptr == ptr::null_mut() {
+            return ptr::null_mut();
+        }
+
+        ptr::write(ptr, new_alloc_size);
+        ptr.offset(1) as *mut c_void
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn rusqlite_wasm32_unknown_unknown_free(data_ptr: *mut u8) {
-        let size_and_data_ptr = data_ptr.sub(size_of::<usize>());
-        let size = *(size_and_data_ptr as *const usize);
-        dealloc(size_and_data_ptr, layout_for(size))
+    pub unsafe extern "C" fn rusqlite_wasm32_unknown_unknown_free(ptr: *mut c_void) {
+        if ptr == ptr::null_mut() {
+            return;
+        }
+        let ptr = (ptr as *mut usize).offset(-1);
+        let alloc_layout = Layout::from_size_align_unchecked(ptr::read(ptr), ALIGN);
+        System.dealloc(ptr as *mut u8, alloc_layout);
     }
 
     #[no_mangle]
