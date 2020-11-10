@@ -71,7 +71,7 @@ impl Default for sqlite3_vtab_cursor {
     }
 }
 
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[cfg(feature = "wasm32-no-libc")]
 pub mod wasm32_unknown_unknown_alloc {
     // https://github.com/fortanix/rust-sgx/blob/master/rs-libc/src/alloc.rs
 

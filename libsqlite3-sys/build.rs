@@ -87,6 +87,12 @@ mod build_bundled {
         }
 
         if env::var("TARGET") == Ok("wasm32-unknown-unknown".to_string()) {
+            if !cfg!(feature = "wasm32-no-libc") {
+                panic!("wasm32-unknown-unknown requires the wasm32-no-libc feature, which enables a libc stub and dummy VFS. This flag is experimental.");
+            }
+        }
+
+        if cfg!(feature = "wasm32-no-libc") {
             cfg.flag("-isystem./sqlite3/wasm32-unknown-unknown-libc-stub")
                 // wasm32-unknown-unknown does not support pthreads
                 .flag("-DSQLITE_THREADSAFE=0")
