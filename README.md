@@ -31,7 +31,7 @@ fn main() -> Result<()> {
                   name            TEXT NOT NULL,
                   data            BLOB
                   )",
-        params![],
+        [],
     )?;
     let me = Person {
         id: 0,
@@ -44,7 +44,7 @@ fn main() -> Result<()> {
     )?;
 
     let mut stmt = conn.prepare("SELECT id, name, data FROM person")?;
-    let person_iter = stmt.query_map(params![], |row| {
+    let person_iter = stmt.query_map([], |row| {
         Ok(Person {
             id: row.get(0)?,
             name: row.get(1)?,
@@ -119,11 +119,11 @@ You can adjust this behavior in a number of ways:
 * If you use the `bundled` feature, `libsqlite3-sys` will use the
   [cc](https://crates.io/crates/cc) crate to compile SQLite from source and
   link against that. This source is embedded in the `libsqlite3-sys` crate and
-  is currently SQLite 3.33.0 (as of `rusqlite` 0.24.1 / `libsqlite3-sys`
-  0.20.0).  This is probably the simplest solution to any build problems. You can enable this by adding the following in your `Cargo.toml` file:
+  is currently SQLite 3.34.0 (as of `rusqlite` 0.24.1 / `libsqlite3-sys`
+  0.21.0).  This is probably the simplest solution to any build problems. You can enable this by adding the following in your `Cargo.toml` file:
   ```toml
   [dependencies.rusqlite]
-  version = "0.24.1"
+  version = "0.24.2"
   features = ["bundled"]
   ```
 * You can set the `SQLITE3_LIB_DIR` to point to directory containing the SQLite

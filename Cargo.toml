@@ -1,6 +1,6 @@
 [package]
 name = "rusqlite"
-version = "0.24.1"
+version = "0.24.2"
 authors = ["The rusqlite developers"]
 edition = "2018"
 description = "Ergonomic wrapper for SQLite"
@@ -97,7 +97,7 @@ bundled-full = [
 ]
 
 [dependencies]
-time = { version = "0.2", optional = true }
+time = { version = "0.2.23", optional = true }
 bitflags = "1.2"
 hashlink = "0.6"
 chrono = { version = "0.4", optional = true }
@@ -110,7 +110,7 @@ fallible-iterator = "0.2"
 fallible-streaming-iterator = "0.1"
 memchr = "2.3"
 uuid = { version = "0.8", optional = true }
-smallvec = "1.4"
+smallvec = "1.0"
 
 [dev-dependencies]
 doc-comment = "0.3"
@@ -125,7 +125,7 @@ bencher = "0.1"
 
 [dependencies.libsqlite3-sys]
 path = "libsqlite3-sys"
-version = "0.20.1"
+version = "0.21.0"
 
 [[test]]
 name = "config_log"
