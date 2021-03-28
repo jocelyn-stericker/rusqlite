@@ -261,6 +261,7 @@ pub trait CreateVTab<'vtab>: VTab<'vtab> {
 /// See [Virtual Table Constraint Operator Codes](https://sqlite.org/c3ref/c_index_constraint_eq.html) for details.
 #[derive(Debug, PartialEq)]
 #[allow(non_snake_case, non_camel_case_types, missing_docs)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum IndexConstraintOp {
     SQLITE_INDEX_CONSTRAINT_EQ,
     SQLITE_INDEX_CONSTRAINT_GT,
@@ -571,19 +572,19 @@ impl Values<'_> {
     // `sqlite3_value_type` returns `SQLITE_NULL` for pointer.
     // So it seems not possible to enhance `ValueRef::from_value`.
     #[cfg(feature = "array")]
-    fn get_array(&self, idx: usize) -> Result<Option<array::Array>> {
+    fn get_array(&self, idx: usize) -> Option<array::Array> {
         use crate::types::Value;
         let arg = self.args[idx];
         let ptr = unsafe { ffi::sqlite3_value_pointer(arg, array::ARRAY_TYPE) };
         if ptr.is_null() {
-            Ok(None)
+            None
         } else {
-            Ok(Some(unsafe {
+            Some(unsafe {
                 let rc = array::Array::from_raw(ptr as *const Vec<Value>);
                 let array = rc.clone();
                 array::Array::into_raw(rc); // don't consume it
                 array
-            }))
+            })
         }
     }
 

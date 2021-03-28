@@ -667,6 +667,7 @@ impl Connection {
 #[repr(i32)]
 #[derive(Debug, PartialEq)]
 #[non_exhaustive]
+#[allow(clippy::upper_case_acronyms)]
 pub enum ConflictType {
     UNKNOWN = -1,
     SQLITE_CHANGESET_DATA = ffi::SQLITE_CHANGESET_DATA,
@@ -694,6 +695,7 @@ impl From<i32> for ConflictType {
 #[repr(i32)]
 #[derive(Debug, PartialEq)]
 #[non_exhaustive]
+#[allow(clippy::upper_case_acronyms)]
 pub enum ConflictAction {
     SQLITE_CHANGESET_OMIT = ffi::SQLITE_CHANGESET_OMIT,
     SQLITE_CHANGESET_REPLACE = ffi::SQLITE_CHANGESET_REPLACE,
@@ -791,7 +793,7 @@ mod test {
         assert!(session.is_empty());
 
         session.attach(None)?;
-        db.execute("INSERT INTO foo (t) VALUES (?);", &["bar"])?;
+        db.execute("INSERT INTO foo (t) VALUES (?);", ["bar"])?;
 
         session.changeset()
     }
@@ -804,7 +806,7 @@ mod test {
         assert!(session.is_empty());
 
         session.attach(None)?;
-        db.execute("INSERT INTO foo (t) VALUES (?);", &["bar"])?;
+        db.execute("INSERT INTO foo (t) VALUES (?);", ["bar"])?;
 
         let mut output = Vec::new();
         session.changeset_strm(&mut output)?;
@@ -864,7 +866,7 @@ mod test {
         )?;
 
         assert!(!CALLED.load(Ordering::Relaxed));
-        let check = db.query_row("SELECT 1 FROM foo WHERE t = ?", &["bar"], |row| {
+        let check = db.query_row("SELECT 1 FROM foo WHERE t = ?", ["bar"], |row| {
             row.get::<_, i32>(0)
         })?;
         assert_eq!(1, check);
@@ -899,7 +901,7 @@ mod test {
             |_conflict_type, _item| ConflictAction::SQLITE_CHANGESET_OMIT,
         )?;
 
-        let check = db.query_row("SELECT 1 FROM foo WHERE t = ?", &["bar"], |row| {
+        let check = db.query_row("SELECT 1 FROM foo WHERE t = ?", ["bar"], |row| {
             row.get::<_, i32>(0)
         })?;
         assert_eq!(1, check);
@@ -915,7 +917,7 @@ mod test {
         assert!(session.is_empty());
 
         session.attach(None)?;
-        db.execute("INSERT INTO foo (t) VALUES (?);", &["bar"])?;
+        db.execute("INSERT INTO foo (t) VALUES (?);", ["bar"])?;
 
         assert!(!session.is_empty());
         Ok(())
