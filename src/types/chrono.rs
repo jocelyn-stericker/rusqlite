@@ -20,7 +20,7 @@ impl FromSql for NaiveDate {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
         value
             .as_str()
-            .and_then(|s| match NaiveDate::parse_from_str(s, "%F") {
+            .and_then(|s| match Self::parse_from_str(s, "%F") {
                 Ok(dt) => Ok(dt),
                 Err(err) => Err(FromSqlError::Other(Box::new(err))),
             })
@@ -45,7 +45,7 @@ impl FromSql for NaiveTime {
                 8 => "%T",
                 _ => "%T%.f",
             };
-            match NaiveTime::parse_from_str(s, fmt) {
+            match Self::parse_from_str(s, fmt) {
                 Ok(dt) => Ok(dt),
                 Err(err) => Err(FromSqlError::Other(Box::new(err))),
             }
@@ -75,7 +75,7 @@ impl FromSql for NaiveDateTime {
                 "%F %T%.f"
             };
 
-            match NaiveDateTime::parse_from_str(s, fmt) {
+            match Self::parse_from_str(s, fmt) {
                 Ok(dt) => Ok(dt),
                 Err(err) => Err(FromSqlError::Other(Box::new(err))),
             }
@@ -238,7 +238,7 @@ mod test {
         assert_eq!(utc, v2);
 
         let v3: DateTime<Utc> = db.one_column("SELECT '2016-02-23 23:56:04'")?;
-        assert_eq!(utc - Duration::milliseconds(789), v3);
+        assert_eq!(utc - Duration::try_milliseconds(789).unwrap(), v3);
 
         let v4: DateTime<Utc> = db.one_column("SELECT '2016-02-23 23:56:04.789+00:00'")?;
         assert_eq!(utc, v4);
